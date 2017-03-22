@@ -1,0 +1,126 @@
+﻿@{
+    ViewBag.Title = "JSON формат из приложения ASP.NET MVC с использованием Javascript";
+}
+<h2>@ViewBag.Title</h2>
+
+<ul>
+    <li>
+        <button class="get-data" data-url="/Home/GetPeopleViaJson">
+            Загрузить список учеников</button></li>
+</ul>
+
+<ul>
+    <li>
+        <button class="get-data" data-url="/Home/GetDate">
+            Загрузить дату 
+        </button>
+    </li>
+</ul>
+
+<ul>
+    <li>
+        <button class="get-data" data-url="/Home/GetTime">
+            Загрузить время
+        </button>
+    </li>
+</ul>
+
+<div id="result">
+</div>
+<script type="text/javascript">
+    if ( typeof ( console ) === 'undefined' || console == null ) {
+        console = { log: function () { } };
+    }
+
+    (function ( $ ) {
+        $( function () {
+            $( '.get-data' ).click( function () {
+                $( '#result' ).html( '' );
+
+                var dataUrl = $( this ).attr( 'data-url' );
+
+                $.ajax( {
+                    type: 'POST',
+                    contentType: 'application/json; charset=utf-8',
+                    url: dataUrl,
+                    data: '{}',
+                    dataType: 'json',
+                    success: function ( data ) {
+                        var people;
+
+                        if ( data.d ) {
+                            people = data.d;
+                        }
+                        else {
+                            // If you're writing directly to the response stream from an ASP.NET Web Forms Page or Handler, there wont be a 'd' property.
+                            people = data;
+                        }
+
+                        console.log( people );
+
+
+                        $( '#result' ).append( '<h3>Mustache</h3>' );
+
+                        var source = $( '#mustache-template' ).html();
+
+                        for ( var i = 0; i < people.length; i++ ) {
+                            var html = Mustache.to_html( source, people[i] );
+
+                            $( '#result' ).append( html );
+                        }
+
+
+                        $( '#result' ).append( '<h3>Handlebars</h3>' );
+
+                        var source = $( '#handlebars-template' ).html();
+                        var template = Handlebars.compile( source );
+
+                        for ( var i = 0; i < people.length; i++ ) {
+                            var html = template( people[i] );
+
+                            $( '#result' ).append( html );
+                        }
+
+
+                        $( '#result' ).append( '<h3>JS Render</h3>' );
+
+                        $( "#result" ).append( $( "#jsrender-template" ).render( people ) );
+
+
+
+                        $( '#result' ).append( '<h3>jQuery Templates</h3>' );
+
+                        $( '#jquery-template' ).tmpl( people ).appendTo( '#result' );
+
+                        // Or using a cached template:
+                        // $('#jquery-template').template('jquery-template');
+                        // $.tmpl('jquery-template', people).appendTo('#result');
+                    },
+                    error: function ( e ) {
+                        console.log( e );
+                    }
+                } );
+            } );
+        } );
+    } )( jQuery );
+</script>
+<script id="mustache-template" type="text/x-mustache-template">
+<div>
+    <b>{{Name}}</b> is from {{Address.State}} and is {{Age}} years old!
+</div>
+</script>
+<script id="handlebars-template" type="text/x-handlebars-template">
+<div>
+    <b>{{Name}}</b> is from {{Address.State}} and is {{Age}} years old!
+</div>
+</script>
+<script id="jsrender-template" type="text/x-jsrender">
+<div>
+    <b>{{>Name}}</b> is from {{>Address.State}} and is {{>Age}} years old!
+</div>
+</script>
+<script id="jquery-template" type="text/x-jquery-tmpl">
+<div>
+    <b>${Name}</b> is from ${Address.State} and is ${Age} years old!
+</div>
+</script>
